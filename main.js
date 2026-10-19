@@ -2,31 +2,20 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
 
 // ==========================================
-// CR7 FOOTBALL STUDIO
-// 3D FOOTBALL SIMULATION
+// CR7 STUDIO - BICYCLE KICK PROTOTYPE
 // ==========================================
 
-// SCENE
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x07111d);
 scene.fog = new THREE.Fog(0x07111d, 45, 110);
 
-// CAMERA
 const camera = new THREE.PerspectiveCamera(
-  50,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  200
+  50, window.innerWidth / window.innerHeight, 0.1, 200
 );
+camera.position.set(0, 8, 27);
+camera.lookAt(0, 1, -7);
 
-camera.position.set(0, 10, 27);
-camera.lookAt(0, 0, -3);
-
-// RENDERER
-const renderer = new THREE.WebGLRenderer({
-  antialias: true
-});
-
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -37,31 +26,26 @@ renderer.toneMappingExposure = 1.2;
 
 document.getElementById('game').appendChild(renderer.domElement);
 
-// LIGHTING
+// LIGHTS
 scene.add(new THREE.HemisphereLight(0xffffff, 0x263b30, 2));
 
-const mainLight = new THREE.DirectionalLight(0xffffff, 3);
-mainLight.position.set(-10, 20, 12);
-mainLight.castShadow = true;
-mainLight.shadow.mapSize.set(2048, 2048);
-scene.add(mainLight);
+const sunlight = new THREE.DirectionalLight(0xffffff, 3);
+sunlight.position.set(-10, 20, 12);
+sunlight.castShadow = true;
+sunlight.shadow.mapSize.set(2048, 2048);
+scene.add(sunlight);
 
-const stadiumLight = new THREE.PointLight(0xffffff, 100, 50);
-stadiumLight.position.set(0, 18, -10);
-scene.add(stadiumLight);
+for (const x of [-15, 15]) {
+  const light = new THREE.PointLight(0xffffff, 100, 55);
+  light.position.set(x, 15, -8);
+  scene.add(light);
+}
 
-// MATERIALS
-const grassMaterial = new THREE.MeshStandardMaterial({
-  color: 0x14713b,
-  roughness: 1
-});
-
-// FOOTBALL PITCH
+// PITCH
 const pitch = new THREE.Mesh(
   new THREE.PlaneGeometry(36, 55),
-  grassMaterial
+  new THREE.MeshStandardMaterial({ color: 0x14713b, roughness: 1 })
 );
-
 pitch.rotation.x = -Math.PI / 2;
 pitch.receiveShadow = true;
 scene.add(pitch);
@@ -71,36 +55,31 @@ for (let i = 0; i < 10; i++) {
   const stripe = new THREE.Mesh(
     new THREE.PlaneGeometry(36, 2.75),
     new THREE.MeshBasicMaterial({
-      color: i % 2 === 0 ? 0x1a7941 : 0x126532
+      color: i % 2 ? 0x126532 : 0x1a7941
     })
   );
-
   stripe.rotation.x = -Math.PI / 2;
   stripe.position.set(0, 0.012, -22 + i * 5.5);
   scene.add(stripe);
 }
 
-// FIELD LINES
-const lineMaterial = new THREE.LineBasicMaterial({
-  color: 0xffffff
-});
+// FIELD MARKINGS
+const whiteLine = new THREE.LineBasicMaterial({ color: 0xffffff });
 
-function fieldLine(points) {
+function drawLine(points) {
   const geometry = new THREE.BufferGeometry().setFromPoints(
-    points.map(p => new THREE.Vector3(p[0], 0.025, p[1]))
+    points.map(([x, z]) => new THREE.Vector3(x, 0.03, z))
   );
-
-  scene.add(new THREE.Line(geometry, lineMaterial));
+  scene.add(new THREE.Line(geometry, whiteLine));
 }
 
-fieldLine([
-  [-18, -27], [18, -27],
-  [18, 27], [-18, 27], [-18, -27]
+drawLine([
+  [-18, -27], [18, -27], [18, 27],
+  [-18, 27], [-18, -27]
 ]);
+drawLine([[-18, 0], [18, 0]]);
+drawLine([[-9, -27], [-9, -19], [9, -19], [9, -27]]);
 
-fieldLine([[-18, 0], [18, 0]]);
-
-// CENTER CIRCLE
 const centerCircle = new THREE.Mesh(
   new THREE.RingGeometry(4.95, 5, 64),
   new THREE.MeshBasicMaterial({
@@ -108,251 +87,170 @@ const centerCircle = new THREE.Mesh(
     side: THREE.DoubleSide
   })
 );
-
 centerCircle.rotation.x = -Math.PI / 2;
 centerCircle.position.y = 0.03;
 scene.add(centerCircle);
 
-// PENALTY AREA
-fieldLine([
-  [-9, -27], [-9, -19],
-  [9, -19], [9, -27]
-]);
-
-fieldLine([
-  [-4, -27], [-4, -23],
-  [4, -23], [4, -27]
-]);
-
-// GOALPOST
-const postMaterial = new THREE.MeshStandardMaterial({
-  color: 0xffffff,
-  metalness: 0.3,
-  roughness: 0.3
-});
+// GOAL
+const goalMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
 function addPost(x, y, z, sx, sy, sz) {
-  const post = new THREE.Mesh(
-    new THREE.BoxGeometry(sx, sy, sz),
-    postMaterial
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(sx, sy, sz), goalMaterial
   );
-
-  post.position.set(x, y, z);
-  post.castShadow = true;
-  scene.add(post);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  scene.add(mesh);
 }
 
 addPost(-3.66, 1.22, -24, 0.15, 2.44, 0.15);
 addPost(3.66, 1.22, -24, 0.15, 2.44, 0.15);
 addPost(0, 2.44, -24, 7.46, 0.15, 0.15);
 
-// GOAL NET
-const goalNet = new THREE.Mesh(
+const net = new THREE.Mesh(
   new THREE.BoxGeometry(7.3, 2.4, 2.5),
   new THREE.MeshBasicMaterial({
     color: 0xffffff,
     wireframe: true,
     transparent: true,
-    opacity: 0.5
+    opacity: 0.45
   })
 );
+net.position.set(0, 1.2, -25.2);
+scene.add(net);
 
-goalNet.position.set(0, 1.2, -25.2);
-scene.add(goalNet);
-
-// STADIUM STANDS
+// STANDS
 const standMaterial = new THREE.MeshStandardMaterial({
-  color: 0x263449,
-  roughness: 0.9
+  color: 0x263449
 });
 
-function createStand(x, z, width, height, depth) {
-  const stand = new THREE.Mesh(
+function stand(x, z, width, height, depth) {
+  const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(width, height, depth),
     standMaterial
   );
-
-  stand.position.set(x, height / 2, z);
-  stand.receiveShadow = true;
-  scene.add(stand);
+  mesh.position.set(x, height / 2, z);
+  scene.add(mesh);
 }
 
-createStand(-21, 0, 7, 12, 55);
-createStand(21, 0, 7, 12, 55);
-createStand(0, -31, 36, 12, 8);
+stand(-21, 0, 7, 12, 55);
+stand(21, 0, 7, 12, 55);
+stand(0, -31, 36, 12, 8);
 
-// STADIUM AUDIENCE
-const crowdMaterial = [
-  0xffffff, 0xff3333, 0x2266ff,
-  0xffcc22, 0x33cc99
-].map(color => new THREE.MeshBasicMaterial({ color }));
+// CROWD
+const crowdColors = [0xffffff, 0xff3333, 0x2266ff, 0xffcc22];
 
 for (let i = 0; i < 500; i++) {
-  const x = (Math.random() - 0.5) * 45;
-  const z = (Math.random() - 0.5) * 60 - 2;
-
   const person = new THREE.Mesh(
     new THREE.BoxGeometry(0.12, 0.18, 0.12),
-    crowdMaterial[i % crowdMaterial.length]
+    new THREE.MeshBasicMaterial({
+      color: crowdColors[i % crowdColors.length]
+    })
   );
-
   person.position.set(
-    x,
+    (Math.random() - 0.5) * 45,
     2 + Math.random() * 7,
-    z
+    (Math.random() - 0.5) * 60 - 2
   );
-
   scene.add(person);
 }
 
 // ==========================================
-// PLAYER MODEL
+// ARTICULATED PLAYER
 // ==========================================
 
-function createPlayer(teamColor, position, scale = 1) {
-  const player = new THREE.Group();
+function makePlayer(teamColor, position) {
+  const root = new THREE.Group();
+  scene.add(root);
+  root.position.set(...position);
 
-  const shirtMaterial = new THREE.MeshStandardMaterial({
-    color: teamColor,
-    roughness: 0.75
-  });
-
-  const shortsMaterial = new THREE.MeshStandardMaterial({
-    color: 0x20242c
-  });
-
-  const skinMaterial = new THREE.MeshStandardMaterial({
-    color: 0xb77b57
-  });
-
-  const hairMaterial = new THREE.MeshStandardMaterial({
-    color: 0x20150e
-  });
-
-  const bootMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff
-  });
+  const shirt = new THREE.MeshStandardMaterial({ color: teamColor });
+  const shorts = new THREE.MeshStandardMaterial({ color: 0x171b25 });
+  const skin = new THREE.MeshStandardMaterial({ color: 0xb77b57 });
+  const hair = new THREE.MeshStandardMaterial({ color: 0x20150e });
+  const boots = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
   function capsule(parent, radius, length, material, x, y, z) {
     const mesh = new THREE.Mesh(
       new THREE.CapsuleGeometry(radius, length, 5, 12),
       material
     );
-
     mesh.position.set(x, y, z);
     mesh.castShadow = true;
     parent.add(mesh);
-
     return mesh;
   }
 
-  // TORSO
-  capsule(
-    player, 0.36, 0.65,
-    shirtMaterial, 0, 1.35, 0
-  );
+  // HIP AND BODY
+  const body = new THREE.Group();
+  body.position.y = 0.85;
+  root.add(body);
+
+  capsule(body, 0.34, 0.65, shirt, 0, 0.5, 0);
+  capsule(body, 0.28, 0.22, shorts, 0, 0.02, 0);
 
   // HEAD
   const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.23, 24, 24),
-    skinMaterial
+    new THREE.SphereGeometry(0.23, 24, 24), skin
   );
+  head.position.set(0, 1.25, 0);
+  body.add(head);
 
-  head.position.set(0, 2.05, 0);
-  head.castShadow = true;
-  player.add(head);
-
-  // HAIR
-  const hair = new THREE.Mesh(
+  const hairCap = new THREE.Mesh(
     new THREE.SphereGeometry(
       0.235, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.45
-    ),
-    hairMaterial
+    ), hair
   );
-
-  hair.position.copy(head.position);
-  player.add(hair);
-
-  // SHORTS
-  capsule(
-    player, 0.29, 0.22,
-    shortsMaterial, 0, 0.85, 0
-  );
+  hairCap.position.copy(head.position);
+  body.add(hairCap);
 
   // ARMS
-  const leftArm = capsule(
-    player, 0.12, 0.52,
-    shirtMaterial, -0.48, 1.35, 0
-  );
+  const arms = [];
 
-  const rightArm = capsule(
-    player, 0.12, 0.52,
-    shirtMaterial, 0.48, 1.35, 0
-  );
-
-  leftArm.rotation.z = 0.18;
-  rightArm.rotation.z = -0.18;
-
-  // HANDS
   for (const side of [-1, 1]) {
-    const hand = new THREE.Mesh(
-      new THREE.SphereGeometry(0.12, 16, 16),
-      skinMaterial
-    );
+    const arm = new THREE.Group();
+    arm.position.set(side * 0.38, 0.95, 0);
+    body.add(arm);
 
-    hand.position.set(side * 0.49, 1.02, 0);
-    player.add(hand);
+    capsule(arm, 0.12, 0.45, shirt, 0, -0.25, 0);
+
+    const hand = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 16, 16), skin
+    );
+    hand.position.set(0, -0.52, 0);
+    arm.add(hand);
+
+    arms.push(arm);
   }
 
-  // LEGS
+  // LEGS WITH PIVOTS
   const legs = [];
 
   for (const side of [-1, 1]) {
-    const leg = capsule(
-      player, 0.14, 0.48,
-      shirtMaterial, side * 0.19, 0.47, 0
-    );
+    const leg = new THREE.Group();
+    leg.position.set(side * 0.18, 0.05, 0);
+    root.add(leg);
+
+    capsule(leg, 0.14, 0.48, shirt, 0, -0.30, 0);
 
     const boot = new THREE.Mesh(
-      new THREE.BoxGeometry(0.22, 0.12, 0.36),
-      bootMaterial
+      new THREE.BoxGeometry(0.22, 0.12, 0.36), boots
     );
-
-    boot.position.set(side * 0.19, 0.06, -0.1);
+    boot.position.set(0, -0.63, -0.12);
     boot.castShadow = true;
-    player.add(boot);
+    leg.add(boot);
 
     legs.push(leg);
   }
 
-  player.position.set(...position);
-  player.scale.setScalar(scale);
-
-  scene.add(player);
-
-  return {
-    group: player,
-    legs,
-    leftArm,
-    rightArm
-  };
+  return { root, body, legs, arms };
 }
 
-// RONALDO-INSPIRED PLAYER
-const ronaldo = createPlayer(
-  0xc91d32,
-  [0, 0, 5],
-  1
-);
+// RED PLAYER AND BLUE GOALKEEPER
+const ronaldo = makePlayer(0xc91d32, [0, 0, 5]);
+const goalkeeper = makePlayer(0x1766e8, [0, 0, -21]);
 
-// GOALKEEPER
-const goalkeeper = createPlayer(
-  0x1766e8,
-  [0, 0, -21],
-  0.95
-);
-
-goalkeeper.group.rotation.y = Math.PI;
+goalkeeper.root.rotation.y = Math.PI;
 
 // ==========================================
 // FOOTBALL
@@ -365,47 +263,96 @@ const ball = new THREE.Mesh(
     roughness: 0.5
   })
 );
-
-ball.position.set(0, 0.35, 2);
 ball.castShadow = true;
 scene.add(ball);
 
-// BALL PATTERN
 const ballPattern = new THREE.Mesh(
   new THREE.TorusGeometry(0.18, 0.015, 8, 40),
   new THREE.MeshBasicMaterial({ color: 0x111111 })
 );
-
-ballPattern.position.copy(ball.position);
 scene.add(ballPattern);
 
 // ==========================================
-// ANIMATION
+// ANIMATION HELPERS
 // ==========================================
 
 const clock = new THREE.Clock();
+const duration = 8;
+
+function smooth(a, b, t) {
+  const x = THREE.MathUtils.clamp((t - a) / (b - a), 0, 1);
+  return x * x * (3 - 2 * x);
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+// ==========================================
+// BICYCLE KICK ANIMATION
+// ==========================================
 
 function animate() {
   requestAnimationFrame(animate);
 
   const time = clock.getElapsedTime();
+  const t = time % duration;
 
-  // Football rotation
-  ball.rotation.x += 0.012;
-  ball.rotation.z += 0.008;
+  const approach = smooth(0.5, 1.5, t);
+  const jump = smooth(1.5, 2.2, t);
+  const kick = smooth(2.1, 2.55, t);
+  const landing = smooth(3.0, 4.0, t);
 
-  // Pattern follows ball
+  // PLAYER MOVEMENT
+  ronaldo.root.position.z = lerp(5, 3.8, approach);
+
+  // BODY LEANS BACK IN THE AIR
+  ronaldo.root.position.y = jump * (1 - landing) * 1.25;
+  ronaldo.body.rotation.x = -jump * (1 - landing) * 0.85;
+
+  // BICYCLE KICK LEGS
+  ronaldo.legs[0].rotation.x = lerp(
+    0, -2.4, kick * (1 - landing)
+  );
+
+  ronaldo.legs[1].rotation.x = lerp(
+    0, 1.5, jump * (1 - landing)
+  );
+
+  // ARMS SPREAD FOR BALANCE
+  ronaldo.arms[0].rotation.z = jump * (1 - landing) * 1.1;
+  ronaldo.arms[1].rotation.z = -jump * (1 - landing) * 1.1;
+
+  // FOOTBALL FLIGHT
+  const flight = smooth(2.45, 3.8, t);
+  const ballX = 0;
+  const ballZ = lerp(2, -23, flight);
+  const ballY = 0.35 + Math.sin(flight * Math.PI) * 3.0;
+
+  ball.position.set(
+    ballX,
+    t > 2.45 && t < 4.0 ? ballY : 0.35,
+    t > 2.45 && t < 4.0 ? ballZ : 2
+  );
+
+  ball.rotation.x += 0.12;
+  ball.rotation.z += 0.08;
+
   ballPattern.position.copy(ball.position);
   ballPattern.quaternion.copy(ball.quaternion);
 
-  // Subtle player movement
-  ronaldo.group.position.y = Math.abs(Math.sin(time * 2)) * 0.025;
+  // GOALKEEPER DIVE
+  const dive = smooth(3.0, 3.6, t);
 
-  ronaldo.legs[0].rotation.x = Math.sin(time * 2) * 0.05;
-  ronaldo.legs[1].rotation.x = -Math.sin(time * 2) * 0.05;
+  goalkeeper.root.rotation.z = -dive * (1 - landing) * 1.0;
+  goalkeeper.root.position.x = dive * 1.3;
+  goalkeeper.root.position.y = dive * 0.15;
 
-  goalkeeper.group.position.y =
-    Math.abs(Math.sin(time * 1.8)) * 0.02;
+  if (t > 4.0) {
+    goalkeeper.root.rotation.z = 0;
+    goalkeeper.root.position.x = 0;
+    goalkeeper.root.position.y = 0;
+  }
 
   renderer.render(scene, camera);
 }
@@ -413,12 +360,11 @@ function animate() {
 animate();
 
 // ==========================================
-// WINDOW RESIZE
+// RESPONSIVE
 // ==========================================
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
