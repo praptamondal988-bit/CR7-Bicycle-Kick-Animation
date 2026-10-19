@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CR7 Bicycle Kick | 3D Football</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #07111d;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    #game {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .hud {
+      position: absolute;
+      top: 22px;
+      left: 25px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .hud h1 {
+      font-size: 24px;
+      letter-spacing: 2px;
+    }
+
+    .hud p {
+      color: #a8b8cc;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .tag {
+      color: #36e58b;
+    }
+
+    .hint {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #cbd5e1;
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="hud">
+    <h1>CR7 <span class="tag">STUDIO</span></h1>
+    <p>BICYCLE KICK · 3D FOOTBALL SIMULATION</p>
+  </div>
+
+  <div id="game"></div>
+
+  <div class="hint">
+    3D STADIUM PREVIEW · PROJECT 01
+  </div>
+
+  <script type="module" src="./main.js"></script>
+
+</body>
+</html>
